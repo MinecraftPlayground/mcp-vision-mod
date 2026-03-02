@@ -8,6 +8,7 @@ import net.minecraft.world.phys.Vec3;
 public abstract class AbstractRenderer<T> implements Renderer<T> {
     protected final int width;
     protected final int height;
+    protected final double FOV_YAW_RAD;
 
     protected final LivingEntity entity;
     protected final Raytracer raytracer;
@@ -16,6 +17,8 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
         this.entity = entity;
         this.width = width;
         this.height = height;
+        double aspectRatio = (double) width / (double) height;
+        this.FOV_YAW_RAD = Math.atan(Math.tan(FOV_PITCH_RAD) * aspectRatio);
         this.raytracer = new Raytracer(this.entity, renderDistance);
         this.raytracer.preloadChunks(entity.getOnPos());
     }
@@ -46,24 +49,14 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
         double yawRad = (yaw + 90) * Mth.DEG_TO_RAD;
         double pitchRad = -pitch * Mth.DEG_TO_RAD;
 
-        // forward
-        Vec3 baseVec = new Vec3(1, 0, 0);
+        double u = ((double) x / (width - 1)) * 2.0 - 1.0;
+        double v = ((double) y / (height - 1)) * 2.0 - 1.0;
 
-        // from viewer to screen to worldspace
-        Vec3 lowerLeft  = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
-        Vec3 upperLeft  = doubleYawPitchRotation(baseVec, -FOV_YAW_RAD,  FOV_PITCH_RAD, yawRad, pitchRad);
-        Vec3 lowerRight = doubleYawPitchRotation(baseVec,  FOV_YAW_RAD, -FOV_PITCH_RAD, yawRad, pitchRad);
-        Vec3 upperRight = doubleYawPitchRotation(baseVec,  FOV_YAW_RAD,  FOV_PITCH_RAD, yawRad, pitchRad);
+        double tanYaw   = Math.tan(FOV_YAW_RAD);
+        double tanPitch = Math.tan(FOV_PITCH_RAD);
 
-        // vertical lerp between top and bottom for this row
-        double v = (double) y / (height - 1);
-        Vec3 leftEdge  = upperLeft.lerp(lowerLeft, v);
-        Vec3 rightEdge = upperRight.lerp(lowerRight, v);
+        Vec3 localRay = new Vec3(1.0, -v * tanPitch, u * tanYaw).normalize();
 
-        // horizontal lerp between left and right edge for this column
-        double u = (double) x / (width - 1);
-        Vec3 ray = leftEdge.lerp(rightEdge, u);
-
-        return ray;
+        return yawPitchRotation(localRay, yawRad, pitchRad);
     }
 }

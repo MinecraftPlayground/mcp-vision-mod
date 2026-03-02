@@ -13,7 +13,7 @@ public class BufferedImageRenderer extends AbstractRenderer<BufferedImage> {
 
     public BufferedImage render() {
         Vec3 eyes = this.entity.getEyePosition();
-        var imgFile = new BufferedImage(width,height, BufferedImage.TYPE_INT_RGB);
+        var imgFile = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 
         IntStream.range(0, width * height).parallel().forEach(i -> {
             int x = i % width;

@@ -8,7 +8,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.logging.LogUtils;
 import de.tomalbrc.cameraobscura.ModConfig;
-import de.tomalbrc.cameraobscura.Permissions;
 import de.tomalbrc.cameraobscura.render.renderer.BufferedImageRenderer;
 import de.tomalbrc.cameraobscura.render.renderer.CanvasImageRenderer;
 import de.tomalbrc.cameraobscura.util.RPHelper;
@@ -25,7 +24,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.CommonColors;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -44,37 +42,25 @@ import java.util.concurrent.CompletableFuture;
 
 public class CameraCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LiteralArgumentBuilder<CommandSourceStack> camera_obscura = Commands.literal("camera-obscura").requires(Permissions.require("camera-obscura.command", 2));
+        LiteralArgumentBuilder<CommandSourceStack> camera_obscura = Commands.literal("camera-obscura");
 
         var node = camera_obscura
                 .executes(CameraCommand::createMapOfSourceForSource)
-                .then(Commands.argument("scale", IntegerArgumentType.integer(1,3)).requires(Permissions.require("camera-obscura.command.scale", ModConfig.getInstance().commandPermissionLevel))
-                        .executes(CameraCommand::createMapOfSourceScaled))
-                .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.type", 2))
-                        .then(Commands.argument("player", EntityArgument.player())
-                                .executes(CameraCommand::createMapOfSourceForSource)
-                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,3)).requires(Permissions.require("camera-obscura.command.type.scale", ModConfig.getInstance().commandPermissionLevel))
-                                        .executes(CameraCommand::createMapOfSourceForSourceScaled))))
-                .then(Commands.literal("save").requires(Permissions.require("camera-obscura.command.save", ModConfig.getInstance().commandPermissionLevel))
+                .then(Commands.literal("save")
                         .executes(x -> {
                             if (x.getSource().getEntity() instanceof LivingEntity livingEntity)
-                                CameraCommand.createImageAsync(x, livingEntity, 1);
+                                CameraCommand.createImageAsync(x, livingEntity, 128, 128);
                             return 0;
                         })
-                        .then(Commands.argument("source", EntityArgument.entity()).requires(Permissions.require("camera-obscura.command.save.type", ModConfig.getInstance().commandPermissionLevel))
-                                .executes(x -> createImageFromSource(x, 1))
-                                .then(Commands.argument("scale", IntegerArgumentType.integer(1,20)).requires(Permissions.require("camera-obscura.command.save.type.scale", ModConfig.getInstance().commandPermissionLevel))
-                                        .executes(x -> createImageFromSource(x, IntegerArgumentType.getInteger(x, "scale")))
-                                ))
-                        .then(Commands.argument("scale", IntegerArgumentType.integer(1,20)).requires(Permissions.require("camera-obscura.command.save.scale", ModConfig.getInstance().commandPermissionLevel))
-                                .executes(x -> {
-                                    if (x.getSource().getEntity() instanceof LivingEntity livingEntity)
-                                        CameraCommand.createImageAsync(x, livingEntity, IntegerArgumentType.getInteger(x, "scale"));
-                                    return 0;
-                                })
+                        .then(Commands.argument("source", EntityArgument.entity())
+                            .executes(x -> createImageFromSource(x, 128, 128))
+                            .then(Commands.argument("width", IntegerArgumentType.integer(128))
+                                .then(Commands.argument("height", IntegerArgumentType.integer(128))
+                                .executes(x -> createImageFromSource(x, IntegerArgumentType.getInteger(x, "width"), IntegerArgumentType.getInteger(x, "height")))
+                            ))
                         )
                 )
-                .then(Commands.literal("clear-cache").requires(Permissions.require("camera-obscura.command.clear-cache", 2))
+                .then(Commands.literal("clear-cache")
                         .executes(x -> {
                             RPHelper.clearCache();
                             //Raytracer.clearCache(); // not sure if enabling this is beneficial
@@ -85,46 +71,46 @@ public class CameraCommand {
         dispatcher.getRoot().addChild(node);
     }
 
-    private static int createImageFromSource(CommandContext<CommandSourceStack> x, int scale) throws CommandSyntaxException {
+    private static int createImageFromSource(CommandContext<CommandSourceStack> x, int width, int height) throws CommandSyntaxException {
         var source = EntityArgument.getEntity(x, "source");
         if (source instanceof LivingEntity livingEntity)
-            CameraCommand.createImageAsync(x, livingEntity, scale);
+            CameraCommand.createImageAsync(x, livingEntity, width, height);
         return 0;
     }
 
-    private static int createMapOfSourceScaled(CommandContext<CommandSourceStack> context) {
-        if (context.getSource().getPlayer() == null) {
-            context.getSource().sendFailure(Component.literal("Needs to be executed as player!"));
-        }
+    // private static int createMapOfSourceScaled(CommandContext<CommandSourceStack> context) {
+    //     if (context.getSource().getPlayer() == null) {
+    //         context.getSource().sendFailure(Component.literal("Needs to be executed as player!"));
+    //     }
 
-        var scale = IntegerArgumentType.getInteger(context, "scale");
+    //     var scale = IntegerArgumentType.getInteger(context, "scale");
 
-        return createMap(context, context.getSource().getPlayer(), context.getSource().getPlayer(), scale);
-    }
+    //     return createMap(context, context.getSource().getPlayer(), context.getSource().getPlayer(), scale);
+    // }
 
-    private static int createMapOfSourceForSourceScaled(CommandContext<CommandSourceStack> context) {
-        if (context.getSource().getPlayer() == null) {
-            context.getSource().sendFailure(Component.literal("Needs to be executed as player!"));
-        }
+    // private static int createMapOfSourceForSourceScaled(CommandContext<CommandSourceStack> context) {
+    //     if (context.getSource().getPlayer() == null) {
+    //         context.getSource().sendFailure(Component.literal("Needs to be executed as player!"));
+    //     }
 
-        Player player;
-        Entity source;
-        var scale = IntegerArgumentType.getInteger(context, "scale");
-        try {
-            source = EntityArgument.getEntity(context, "source");
-            player = EntityArgument.getPlayer(context, "player");
-        } catch (CommandSyntaxException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
+    //     Player player;
+    //     Entity source;
+    //     var scale = IntegerArgumentType.getInteger(context, "scale");
+    //     try {
+    //         source = EntityArgument.getEntity(context, "source");
+    //         player = EntityArgument.getPlayer(context, "player");
+    //     } catch (CommandSyntaxException e) {
+    //         e.printStackTrace();
+    //         throw new RuntimeException(e);
+    //     }
 
-        if (source instanceof LivingEntity livingEntity) {
-            return createMap(context, livingEntity, player, scale);
-        }
+    //     if (source instanceof LivingEntity livingEntity) {
+    //         return createMap(context, livingEntity, player, scale);
+    //     }
 
-        return 0;
+    //     return 0;
 
-    }
+    // }
 
     private static int createMapOfSourceForSource(CommandContext<CommandSourceStack> context) {
         if (context.getSource().getPlayer() == null) {
@@ -220,13 +206,13 @@ public class CameraCommand {
     }
 
 
-    private static void createImageAsync(CommandContext<CommandSourceStack> context, LivingEntity entity, int scale) {
+    private static void createImageAsync(CommandContext<CommandSourceStack> context, LivingEntity entity, int width, int height) {
         CommandSourceStack source = context.getSource();
 
         if (ModConfig.getInstance().showSystemMessages)
             source.sendSuccess(() -> Component.literal("Taking photo..."), false);
 
-        var renderer = new BufferedImageRenderer(entity, 128*scale, 128*scale, ModConfig.getInstance().renderDistance);
+        var renderer = new BufferedImageRenderer(entity, width, height, ModConfig.getInstance().renderDistance);
 
         long startTime = System.nanoTime();
 
