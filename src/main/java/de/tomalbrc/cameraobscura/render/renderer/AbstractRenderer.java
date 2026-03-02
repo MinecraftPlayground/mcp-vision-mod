@@ -40,8 +40,7 @@ public abstract class AbstractRenderer<T> implements Renderer<T> {
         return new Vec3(newX, newY, newZ);
     }
 
-    public static Vec3 doubleYawPitchRotation(Vec3 base, double firstYaw, double firstPitch, double secondYaw,
-                                              double secondPitch) {
+    public static Vec3 doubleYawPitchRotation(Vec3 base, double firstYaw, double firstPitch, double secondYaw, double secondPitch) {
         return yawPitchRotation(yawPitchRotation(base, firstYaw, firstPitch), secondYaw, secondPitch);
     }
 

@@ -50,8 +50,9 @@ public class ModConfig {
             instance = new ModConfig();
             try {
                 if (CONFIG_FILE_PATH.toFile().createNewFile()) {
-                    FileOutputStream stream = new FileOutputStream(CONFIG_FILE_PATH.toFile());
-                    stream.write(gson.toJson(instance).getBytes(StandardCharsets.UTF_8));
+                    try (FileOutputStream stream = new FileOutputStream(CONFIG_FILE_PATH.toFile())) {
+                        stream.write(gson.toJson(instance).getBytes(StandardCharsets.UTF_8));
+                    }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -69,8 +70,8 @@ public class ModConfig {
     }
 
     private static void save() {
-        try {
-            FileOutputStream stream = new FileOutputStream(CONFIG_FILE_PATH.toFile());
+        
+        try (FileOutputStream stream = new FileOutputStream(CONFIG_FILE_PATH.toFile())) {
             stream.write(gson.toJson(instance).getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException(e);
