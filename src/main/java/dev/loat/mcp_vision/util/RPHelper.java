@@ -35,6 +35,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Base64;
@@ -78,7 +79,7 @@ public class RPHelper {
             return blockStateResources.get(blockState);
         }
 
-        Identifier location = blockState.getBlock().builtInRegistryHolder().key().identifier();
+        Identifier location = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
         byte[] data = getBuilder().getDataOrSource("assets/" + location.getNamespace() + "/blockstates/" + location.getPath() + ".json");
         if (data != null) {
             var resource = gson.fromJson(new InputStreamReader(new ByteArrayInputStream(data)), RPBlockState.class);
@@ -168,16 +169,16 @@ public class RPHelper {
     private static byte[] getPlayerTexture(String uuid) {
         InputStreamReader inputStreamReader = null;
         try {
-            URL url = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false");
+            URL url = new URI("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false").toURL();
             inputStreamReader = new InputStreamReader(url.openStream());
 
-            JsonObject textureProperty = new JsonParser().parse(inputStreamReader).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject();
+            JsonObject textureProperty = JsonParser.parseReader(inputStreamReader).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject();
             String texture = textureProperty.get("value").getAsString();
             var newJson = new String(Base64.getDecoder().decode(texture));
 
-            var str = new JsonParser().parse(newJson).getAsJsonObject().get("textures").getAsJsonObject().get("SKIN").getAsJsonObject().get("url").getAsString();
+            var str = JsonParser.parseString(newJson).getAsJsonObject().get("textures").getAsJsonObject().get("SKIN").getAsJsonObject().get("url").getAsString();
 
-            URL textureUrl = new URL(str);
+            URL textureUrl = new URI(str).toURL();
             byte[] bytes = textureUrl.openStream().readAllBytes();
 
             return bytes;
@@ -192,7 +193,7 @@ public class RPHelper {
                 boolean matches = true;
                 if (!entry.getKey().isEmpty()) {
                     try {
-                        String str = String.format("%s[%s]", blockState.getBlock().builtInRegistryHolder().key().identifier(), entry.getKey());
+                        String str = String.format("%s[%s]", BuiltInRegistries.BLOCK.getKey(blockState.getBlock()), entry.getKey());
                         BlockStateParser.BlockResult blockResult = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK, str, false);
 
                         for (Map.Entry<Property<?>, Comparable<?>> propertyComparableEntry : blockResult.properties().entrySet()) {

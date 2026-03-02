@@ -1,7 +1,6 @@
 package dev.loat.mcp_vision.render.model.resource;
 
 import com.google.gson.annotations.SerializedName;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.util.Mth;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
