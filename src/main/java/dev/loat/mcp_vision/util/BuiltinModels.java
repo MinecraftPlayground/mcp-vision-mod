@@ -15,7 +15,6 @@ import org.joml.Vector4f;
 import dev.loat.mcp_vision.json.CachedIdentifierDeserializer;
 import dev.loat.mcp_vision.render.model.resource.RPElement;
 import dev.loat.mcp_vision.render.model.resource.RPModel;
-import dev.loat.mcp_vision.render.model.triangle.TriangleModel;
 import dev.loat.mcp_vision.util.model.*;
 
 import java.util.Map;
