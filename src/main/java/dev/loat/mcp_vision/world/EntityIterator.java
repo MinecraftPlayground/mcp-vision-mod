@@ -32,38 +32,38 @@ public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityH
 
     private final List<EntityHit> allEntities;
 
-    public EntityIterator(ServerLevel level, Map<Vector2i, LevelChunk> cachedChunks, LivingEntity entity1) {
+    public EntityIterator(ServerLevel level, Map<Vector2i, LevelChunk> cachedChunks, LivingEntity entity) {
         super(level, cachedChunks);
-        this.entity = entity1;
+        this.entity = entity;
 
         this.allEntities = new ObjectArrayList<>();
         if (ModConfig.getInstance().renderEntities) {
             List<Entity> lst = this.level.getEntities(this.entity, this.entity.getBoundingBox().inflate(ModConfig.getInstance().renderDistance));
-            lst.sort(Comparator.comparingDouble(a -> a.position().distanceTo(entity1.position())));
+            lst.sort(Comparator.comparingDouble(a -> a.position().distanceTo(this.entity.position())));
 
             for (int i = 0; i < lst.size() && this.allEntities.size() <= ModConfig.getInstance().renderEntitiesAmount; i++) {
-                Entity entity = lst.get(i);
+                Entity currentEntity = lst.get(i);
                 EntityHit hit;
 
-                if (!isInFrustum(entity1.getViewVector(1.f), entity1.position(), entity.position(), ModConfig.getInstance().fov+10) || !entity1.hasLineOfSight(entity)) continue;
+                if (!isInFrustum(this.entity.getViewVector(1.f), this.entity.position(), currentEntity.position(), ModConfig.getInstance().fov+10) || !this.entity.hasLineOfSight(currentEntity)) continue;
 
-                switch (entity) {
+                switch (currentEntity) {
                     case LivingEntity livingEntity ->
-                            hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), new Vector3f(0, livingEntity.yBodyRot, 0), entity.getUUID(), null);
+                            hit = new EntityHit(currentEntity.getType(), currentEntity.getBoundingBox().inflate(1), currentEntity.position().toVector3f(), new Vector3f(0, livingEntity.yBodyRot, 0), currentEntity.getUUID(), null);
                     case ItemFrame itemFrame -> {
                         var rot = itemFrame.getDirection().getRotation();
-                        hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), rot.getEulerAnglesXYZ(new Vector3f()).mul(Mth.RAD_TO_DEG), entity.getUUID(), null);
+                        hit = new EntityHit(currentEntity.getType(), currentEntity.getBoundingBox().inflate(1), currentEntity.position().toVector3f(), rot.getEulerAnglesXYZ(new Vector3f()).mul(Mth.RAD_TO_DEG), currentEntity.getUUID(), null);
                     }
                     case ItemEntity itemEntity ->
-                            hit = new EntityHit(entity.getType(), entity.getBoundingBox(), entity.position().toVector3f(), new Vector3f(0, itemEntity.getVisualRotationYInDegrees(), 0), entity.getUUID(), itemEntity.getItem().copy());
+                            hit = new EntityHit(currentEntity.getType(), currentEntity.getBoundingBox(), currentEntity.position().toVector3f(), new Vector3f(0, itemEntity.getVisualRotationYInDegrees(), 0), currentEntity.getUUID(), itemEntity.getItem().copy());
                     default ->
-                            hit = new EntityHit(entity.getType(), entity.getBoundingBox().inflate(1), entity.position().toVector3f(), new Vector3f(entity.getXRot(), entity.getYRot(), 0), entity.getUUID(), null);
+                            hit = new EntityHit(currentEntity.getType(), currentEntity.getBoundingBox().inflate(1), currentEntity.position().toVector3f(), new Vector3f(currentEntity.getXRot(), currentEntity.getYRot(), 0), currentEntity.getUUID(), null);
                 }
 
                 // Cache player textures
-                if (entity.getType() == EntityType.PLAYER) {
+                if (currentEntity.getType() == EntityType.PLAYER) {
                     try {
-                        RPHelper.loadTextureImage(CachedIdentifierDeserializer.get(Constants.DYNAMIC_PLAYER_TEXTURE +":"+ entity.getUUID().toString().replace("-", "")));
+                        RPHelper.loadTextureImage(CachedIdentifierDeserializer.get(Constants.DYNAMIC_PLAYER_TEXTURE +":"+ currentEntity.getUUID().toString().replace("-", "")));
                     } catch (Exception e) {
                         LogUtils.getLogger().info("Could not render player");
                         continue;
