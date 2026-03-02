@@ -66,6 +66,8 @@ public class BuiltinEntityModels {
     }
 
     public static void initModels() {
+        // TODO: Entity models that do not exist, are defaulted to a pig model
+        // TODO: Models that do not exist, should be defaulted to an empty model instead
         modelMap.put(EntityType.ARMOR_STAND, loadModel("/builtin/armor_stand.json"));
         modelMap.put(EntityType.AXOLOTL, loadModel("/builtin/axolotl.json"));
         modelMap.put(EntityType.BEE, loadModel("/builtin/bee.json"));
