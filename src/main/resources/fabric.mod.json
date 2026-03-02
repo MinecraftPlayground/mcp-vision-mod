@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "mcp-vision",
+  "version": "${version}",
+  "name": "MCP Vision",
+  "description": "Server side MCP server that allows LLMs to take screenshots of a specific location, with pitch an yaw.",
+  "authors": [
+    "tomalbrc",
+    "Mqxx"
+  ],
+  "contact": {
+    "website": "https://github.com/MinecraftPlayground/mcp-vision-mod",
+    "repo": "mcp-vision-mod"
+  },
+  "license": "LGPL-3.0",
+  "icon": "mcp_vision.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.loat.mcp_vision.MCPVision"
+    ]
+  },
+  "mixins": [
+    "mcp_vision.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "polymer-resource-pack": "*",
+    "polymer-core": "*",
+    "minecraft": ">=1.21.6"
+  }
+}

@@ -1,0 +1,106 @@
+package dev.loat.mcp_vision.world;
+
+import com.mojang.logging.LogUtils;
+
+import dev.loat.mcp_vision.ModConfig;
+import dev.loat.mcp_vision.json.CachedIdentifierDeserializer;
+import dev.loat.mcp_vision.util.Constants;
+import dev.loat.mcp_vision.util.RPHelper;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector2i;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+public class EntityIterator extends AbstractWorldIterator<EntityIterator.EntityHit> {
+
+    private final List<EntityHit> allEntities;
+
+    public EntityIterator(ServerLevel level, Map<Vector2i, LevelChunk> cachedChunks, Vec3 position, float yaw, float pitch) {
+        super(level, cachedChunks);
+
+        this.allEntities = new ObjectArrayList<>();
+        if (ModConfig.getInstance().renderEntities) {
+            AABB searchBox = AABB.ofSize(position, ModConfig.getInstance().renderDistance * 2, ModConfig.getInstance().renderDistance * 2, ModConfig.getInstance().renderDistance * 2);
+            List<Entity> list = this.level.getEntities((Entity) null, searchBox);
+            list.sort(Comparator.comparingDouble(a -> a.position().distanceTo(position)));
+
+            // Blickvektor aus yaw/pitch berechnen
+            float pitchRad = pitch * Mth.DEG_TO_RAD;
+            float yawRad = yaw * Mth.DEG_TO_RAD;
+            Vec3 viewVector = new Vec3(
+                -Mth.sin(yawRad) * Mth.cos(pitchRad),
+                -Mth.sin(pitchRad),
+                Mth.cos(yawRad) * Mth.cos(pitchRad)
+            );
+
+            for (int i = 0; i < list.size() && this.allEntities.size() <= ModConfig.getInstance().renderEntitiesAmount; i++) {
+                Entity currentEntity = list.get(i);
+                EntityHit hit;
+
+                if (!isInFrustum(viewVector, position, currentEntity.position(), ModConfig.getInstance().fov + 10)) continue;
+                // hasLineOfSight entfällt da keine Entity als Quelle
+
+                switch (currentEntity) {
+                    case LivingEntity livingEntity ->
+                        hit = new EntityHit(currentEntity.getType(), currentEntity.getBoundingBox().inflate(1), currentEntity.position().toVector3f(), new Vector3f(0, livingEntity.yBodyRot, 0), currentEntity.getUUID(), null);
+                    case ItemFrame itemFrame -> {
+                        var rot = itemFrame.getDirection().getRotation();
+                        hit = new EntityHit(currentEntity.getType(), currentEntity.getBoundingBox().inflate(1), currentEntity.position().toVector3f(), rot.getEulerAnglesXYZ(new Vector3f()).mul(Mth.RAD_TO_DEG), currentEntity.getUUID(), null);
+                    }
+                    case ItemEntity itemEntity ->
+                        hit = new EntityHit(currentEntity.getType(), currentEntity.getBoundingBox(), currentEntity.position().toVector3f(), new Vector3f(0, itemEntity.getVisualRotationYInDegrees(), 0), currentEntity.getUUID(), itemEntity.getItem().copy());
+                    default ->
+                        hit = new EntityHit(currentEntity.getType(), currentEntity.getBoundingBox().inflate(1), currentEntity.position().toVector3f(), new Vector3f(currentEntity.getXRot(), currentEntity.getYRot(), 0), currentEntity.getUUID(), null);
+                }
+
+                if (currentEntity.getType() == EntityType.PLAYER) {
+                    try {
+                        RPHelper.loadTextureImage(CachedIdentifierDeserializer.get(Constants.DYNAMIC_PLAYER_TEXTURE + ":" + currentEntity.getUUID().toString().replace("-", "")));
+                    } catch (Exception e) {
+                        LogUtils.getLogger().info("Could not render player");
+                        continue;
+                    }
+                }
+
+                this.allEntities.add(hit);
+            }
+        }
+    }
+
+    public boolean isInFrustum(Vec3 viewVector, Vec3 cameraPosition, Vec3 targetPosition, float fov) {
+        Vec3 normalizedDirection = targetPosition.subtract(cameraPosition).normalize();
+        Vec3 normalizedViewVector = viewVector.normalize();
+        double dotProduct = normalizedViewVector.dot(normalizedDirection);
+        return dotProduct >= Math.cos(Math.toRadians(fov) / 2.0);
+    }
+
+    @Override
+    public List<EntityHit> raycast(ClipContext clipContext) {
+        List<EntityHit> hits = new ObjectArrayList<>();
+        for (int i = 0; i < this.allEntities.size(); i++) {
+            EntityHit entityHit = this.allEntities.get(i);
+            if (entityHit.boundingBox().intersects(clipContext.getFrom(), clipContext.getTo())) {
+                hits.add(entityHit);
+            }
+        }
+        return hits;
+    }
+
+    public record EntityHit(EntityType<?> type, AABB boundingBox, Vector3fc position, Vector3fc rotation, UUID uuid, Object data) {}
+}
