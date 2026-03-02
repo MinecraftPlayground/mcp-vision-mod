@@ -24,7 +24,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
-public class MCPVisionCommand {
+public class CommandManager {
     public static void register() {
         CommandRegistrationCallback.EVENT.register((
             dispatcher,
@@ -32,7 +32,7 @@ public class MCPVisionCommand {
             environment
         ) -> dispatcher.register(
             Commands.literal("mcp-vision")
-                .then(Commands.literal("save")
+                .then(Commands.literal("save-entity")
                     .then(Commands.argument("source", EntityArgument.entity())
                         .executes(x -> createImageFromSource(x, 128, 128))
                         .then(Commands.argument("width", IntegerArgumentType.integer(128))
@@ -54,7 +54,7 @@ public class MCPVisionCommand {
     private static int createImageFromSource(CommandContext<CommandSourceStack> x, int width, int height) throws CommandSyntaxException {
         var source = EntityArgument.getEntity(x, "source");
         if (source instanceof LivingEntity livingEntity)
-            MCPVisionCommand.createImageAsync(x, livingEntity, width, height);
+            CommandManager.createImageAsync(x, livingEntity, width, height);
         return 0;
     }
 
