@@ -11,7 +11,6 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.BedBlock;
@@ -57,14 +56,13 @@ public class Raytracer {
 
     private static final TriangleModel localSkyModel = new TriangleModel(BuiltinModels.skyModel(Vec3.ZERO));
 
-    public Raytracer(LivingEntity entity, int distance) {
-        this.level = (ServerLevel) entity.level();
+    public Raytracer(ServerLevel level, Vec3 position, float yaw, float pitch, int distance) {
+        this.level = level;
         this.distance = distance;
 
         var cache = new Object2ObjectOpenHashMap<Vector2i, LevelChunk>();
         this.blockIterator = new BlockIterator(this.level, cache);
-        this.entityIterator = new EntityIterator(this.level, cache, entity);
-
+        this.entityIterator = new EntityIterator(this.level, cache, position, yaw, pitch);
         this.skyDarken = this.level.getSkyDarken();
     }
 
