@@ -1,8 +1,6 @@
 package dev.loat.mcp_vision.command;
 
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.logging.LogUtils;
@@ -10,6 +8,7 @@ import com.mojang.logging.LogUtils;
 import dev.loat.mcp_vision.ModConfig;
 import dev.loat.mcp_vision.render.renderer.BufferedImageRenderer;
 import dev.loat.mcp_vision.util.RPHelper;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -26,10 +25,13 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 public class MCPVisionCommand {
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        LiteralArgumentBuilder<CommandSourceStack> camera_obscura = Commands.literal("mcp-vision");
-
-        var node = camera_obscura
+    public static void register() {
+        CommandRegistrationCallback.EVENT.register((
+            dispatcher,
+            registryAccess,
+            environment
+        ) -> dispatcher.register(
+            Commands.literal("mcp-vision")
                 .then(Commands.literal("save")
                     .then(Commands.argument("source", EntityArgument.entity())
                         .executes(x -> createImageFromSource(x, 128, 128))
@@ -45,9 +47,8 @@ public class MCPVisionCommand {
                         //Raytracer.clearCache(); // not sure if enabling this is beneficial
                         return 0;
                     }))
-                .build();
 
-        dispatcher.getRoot().addChild(node);
+        ));
     }
 
     private static int createImageFromSource(CommandContext<CommandSourceStack> x, int width, int height) throws CommandSyntaxException {
