@@ -1,0 +1,73 @@
+package dev.loat.mcp_vision.util.model;
+
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
+
+import dev.loat.mcp_vision.json.CachedIdentifierDeserializer;
+import dev.loat.mcp_vision.render.model.resource.RPElement;
+import dev.loat.mcp_vision.render.model.resource.RPModel;
+
+public class PortalModel {
+    public static RPModel.View get(boolean flat) {
+        RPModel rpModel = new RPModel();
+        rpModel.parent = CachedIdentifierDeserializer.get("minecraft:block/cube_all");
+        rpModel.textures = new Object2ObjectOpenHashMap<>();
+        if (flat) {
+            rpModel.textures.put("all", "minecraft:block/black_concrete");
+        } else {
+            rpModel.textures.put("all", "minecraft:block/black_concrete");
+        }
+        rpModel.elements = new ObjectArrayList<>();
+        var element = new RPElement();
+        element.from = new Vector3f(0,flat ? 12 : 0,0);
+        element.to = new Vector3f(16,flat ? 12 : 16, 16);
+        element.faces = new Object2ObjectOpenHashMap<>();
+
+        var ti = new RPElement.TextureInfo();
+        ti.texture = "#all";
+
+        var tiSide = new RPElement.TextureInfo();
+        tiSide.texture = "#all";
+        tiSide.uv = new Vector4f(0,0,16,16);
+
+        element.faces.put("up", ti);
+        element.faces.put("down", ti);
+        element.faces.put("north", tiSide);
+        element.faces.put("east", tiSide);
+        element.faces.put("south", tiSide);
+        element.faces.put("west", tiSide);
+
+        rpModel.elements.add(element);
+
+        var view = new RPModel.View(rpModel, Vec3.ZERO.toVector3f());
+        return view;
+    }
+
+    public static RPModel getItem() {
+        RPModel rpModel = new RPModel();
+        rpModel.parent = null;
+        rpModel.textures = new Object2ObjectOpenHashMap<>();
+        rpModel.elements = new ObjectArrayList<>();
+        var element = new RPElement();
+        element.from = new Vector3f(0,0,0);
+        element.to = new Vector3f(16,16, 0);
+        element.faces = new Object2ObjectOpenHashMap<>();
+
+        var ti = new RPElement.TextureInfo();
+        ti.texture = "#layer0";
+
+        var tiSide = new RPElement.TextureInfo();
+        tiSide.texture = "#layer0";
+        tiSide.uv = new Vector4f(0,0,16,16);
+
+        element.faces.put("north", tiSide);
+        element.faces.put("south", tiSide);
+
+        rpModel.elements.add(element);
+
+        return rpModel;
+    }
+}

@@ -1,26 +1,27 @@
 {
   "schemaVersion": 1,
-  "id": "camera-obscura",
+  "id": "mcp-vision",
   "version": "${version}",
-  "name": "Camera Obscura",
-  "description": "Serverside camera! Renders images on the server, no client-side mods required!",
+  "name": "MCP Vision",
+  "description": "Server side MCP server that allows LLMs to take screenshots of a specific location, with pitch an yaw.",
   "authors": [
-    "tomalbrc"
+    "tomalbrc",
+    "Mqxx"
   ],
   "contact": {
-    "website": "https://github.com/tomalbrc/camera-obscura",
-    "repo": "camera-obscura"
+    "website": "https://github.com/MinecraftPlayground/mcp-vision-mod",
+    "repo": "mcp-vision-mod"
   },
   "license": "LGPL-3.0",
-  "icon": "camera-obscura-icon.png",
+  "icon": "mcp_vision.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "de.tomalbrc.cameraobscura.CameraObscura"
+      "dev.loat.mcp_vision.MCPVision"
     ]
   },
   "mixins": [
-    "camera-obscura.mixins.json"
+    "mcp_vision.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",
