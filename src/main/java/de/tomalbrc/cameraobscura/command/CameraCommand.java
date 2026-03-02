@@ -240,9 +240,9 @@ public class CameraCommand {
             if (!f.mkdir())
                 return;
         }
-
-        String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.ENGLISH).format(new Date());
-        var file = rendersDir.resolve(date+".png").toFile();
+        
+        String date = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH).format(new Date());
+        var file = rendersDir.resolve(date + ".png").toFile();
 
         try {
             ImageIO.write(mapImage, "PNG", file);
