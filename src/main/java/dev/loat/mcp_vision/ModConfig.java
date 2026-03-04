@@ -35,6 +35,7 @@ public class ModConfig {
     public int biomeBlend = 1;
 
     public int commandPermissionLevel = 2;
+    public int mcpServerPort = 25566;
 
     public static ModConfig getInstance() {
         if (instance == null) {
