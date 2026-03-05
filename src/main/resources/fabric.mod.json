@@ -17,7 +17,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "dev.loat.mcp_vision.MCPVision"
+      "dev.loat.mcp_bridge.MCPBridge"
     ]
   },
   "mixins": [
